@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sola Scriptura Decision App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            color: #334155;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div id="root" class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full flex flex-col items-center text-center space-y-6">
+        <h1 class="text-4xl font-bold text-gray-800">Sola Scriptura Decision</h1>
+        <p class="text-lg text-gray-600">Enter a theological topic and let the app determine if it aligns with "Sola Scriptura."</p>
+
+        <div class="w-full space-y-4">
+            <textarea id="topicInput" rows="4" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"></textarea>
+            <button onclick="checkTopic()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-md">
+                Check Sola Scriptura
+            </button>
+        </div>
+
+        <div id="result" class="mt-6 p-4 w-full bg-gray-50 rounded-lg shadow-inner hidden">
+            <p id="resultText" class="text-xl font-bold text-gray-800"></p>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=`;
+        
+        async function fetchWithExponentialBackoff(url, options, retries = 5, delay = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 429 && retries > 0) {
+                    console.warn(`429 Too Many Requests. Retrying in ${delay}ms...`);
+                    await new Promise(res => setTimeout(res, delay));
+                    return fetchWithExponentialBackoff(url, options, retries - 1, delay * 2);
+                }
+                return response;
+            } catch (error) {
+                if (retries > 0) {
+                    console.error(`Fetch failed. Retrying in ${delay}ms...`, error);
+                    await new Promise(res => setTimeout(res, delay));
+                    return fetchWithExponentialBackoff(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+        
+        async function checkTopic() {
+            const topic = document.getElementById('topicInput').value;
+            const resultDiv = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+
+            if (!topic) {
+                resultText.textContent = "Please enter a theological topic.";
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            resultText.textContent = "Checking...";
+            resultDiv.classList.remove('hidden');
+
+            const prompt = `Critique the following theological topic from a Sola Scriptura perspective, giving a concise and direct answer. The response should strictly adhere to the principles of Sola Scriptura. The topic is: "${topic}"`;
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+            };
+
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            };
+
+            try {
+                const response = await fetchWithExponentialBackoff(API_URL, options);
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
+                resultText.textContent = text;
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                resultText.textContent = "An error occurred. Please try again.";
+            }
+        }
+    </script>
+</body>
+</html>
