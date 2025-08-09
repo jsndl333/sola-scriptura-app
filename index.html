@@ -12,6 +12,12 @@
             background: #f0f4f8;
             color: #334155;
         }
+        .result-container p {
+            margin-bottom: 1rem;
+        }
+        .result-container strong {
+            font-weight: 700;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -26,13 +32,13 @@
             </button>
         </div>
 
-        <div id="result" class="mt-6 p-4 w-full bg-gray-50 rounded-lg shadow-inner hidden">
-            <p id="resultText" class="text-xl font-bold text-gray-800"></p>
+        <div id="result" class="mt-6 p-4 w-full bg-gray-50 rounded-lg shadow-inner hidden result-container">
+            <p id="resultText" class="text-lg text-gray-800 text-left"></p>
         </div>
     </div>
     
     <script>
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=AIzaSyBd1ym_rmXn2QuUOcSTFC0Qm33E-P5FSSc`;
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=AIzaSyBd1ym_rmXn2QuUOcSTFC0Qm33E-P5FSSc";
         
         async function fetchWithExponentialBackoff(url, options, retries = 5, delay = 1000) {
             try {
@@ -57,9 +63,17 @@
             const topic = document.getElementById('topicInput').value;
             const resultDiv = document.getElementById('result');
             const resultText = document.getElementById('resultText');
+            resultText.innerHTML = ""; // Clear previous content
 
             if (!topic) {
                 resultText.textContent = "Please enter a theological topic.";
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Check if API key is present, which would cause a 400 error
+            if (API_URL.includes("YOUR_API_KEY")) {
+                resultText.innerHTML = "<strong>Please add your API key to the code to use the app.</strong>";
                 resultDiv.classList.remove('hidden');
                 return;
             }
@@ -85,8 +99,14 @@
                     throw new Error(`API call failed with status: ${response.status}`);
                 }
                 const data = await response.json();
-                const text = data.candidates[0].content.parts[0].text;
-                resultText.textContent = text;
+                let text = data.candidates[0].content.parts[0].text;
+                
+                // Replace markdown bolding with HTML <strong> tags
+                text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                // Split text into paragraphs based on newlines and wrap each in <p> tags
+                const paragraphs = text.split('\n').filter(p => p.trim() !== '');
+                resultText.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
             } catch (error) {
                 console.error("Error calling Gemini API:", error);
                 resultText.textContent = "An error occurred. Please try again.";
