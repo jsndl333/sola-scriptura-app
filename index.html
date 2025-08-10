@@ -5,12 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sola Scriptura Decision App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-    <h1>Sola Scriptura Decision App</h1>
-    <p>The App that will help us make wise choices in life based upon the Word of God</p>
-</body>
-</html>
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
@@ -27,8 +22,8 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
     <div id="root" class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full flex flex-col items-center text-center space-y-6">
-        <h1 class="text-4xl font-bold text-gray-800">Sola Scriptura Decision</h1>
-        <p class="text-lg text-gray-600">Enter a question or topic that you would like an answer to and let the app determine if it aligns with "Sola Scriptura."</p>
+        <h1 class="text-4xl font-bold text-gray-800">Sola Scriptura Decision App</h1>
+        <p class="text-lg text-gray-600">The App that will help us make wise choices in life based upon the Word of God</p>
 
         <div class="w-full space-y-4">
             <textarea id="topicInput" rows="4" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"></textarea>
@@ -43,7 +38,7 @@
     </div>
     
     <script>
-        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=AIzaSyBd1ym_rmXn2QuUOcSTFC0Qm33E-P5FSSc";
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=YOUR_API_KEY";
         
         async function fetchWithExponentialBackoff(url, options, retries = 5, delay = 1000) {
             try {
