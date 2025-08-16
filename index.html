@@ -34,12 +34,49 @@
 
         <div id="result" class="mt-6 p-4 w-full bg-gray-50 rounded-lg shadow-inner hidden result-container">
             <p id="resultText" class="text-lg text-gray-800 text-left"></p>
+            <button id="playAudioBtn" onclick="playAudio()" class="hidden mt-4 bg-green-600 text-white py-2 px-4 rounded-lg font-bold hover:bg-green-700 transition-all duration-300">
+                Play Audio
+            </button>
         </div>
     </div>
     
     <script>
-        const API_URL = "http://localhost:3000/api/check";
+        const API_URL = "/api/check";
         
+        async function playAudio() {
+            const text = document.getElementById('resultText').innerText;
+            const playAudioBtn = document.getElementById('playAudioBtn');
+            playAudioBtn.disabled = true;
+            playAudioBtn.textContent = 'Loading...';
+
+            try {
+                const response = await fetch('/api/text-to-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Text-to-speech API call failed with status: ${response.status}`);
+                }
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+
+                audio.onended = () => {
+                    playAudioBtn.disabled = false;
+                    playAudioBtn.textContent = 'Play Audio';
+                };
+            } catch (error) {
+                console.error('Error playing audio:', error);
+                playAudioBtn.disabled = false;
+                playAudioBtn.textContent = 'Play Audio';
+                alert('Failed to play audio. Please try again.');
+            }
+        }
+
         async function fetchWithExponentialBackoff(url, options, retries = 5, delay = 1000) {
             try {
                 const response = await fetch(url, options);
@@ -107,6 +144,7 @@
                 // Split text into paragraphs based on newlines and wrap each in <p> tags
                 const paragraphs = text.split('\n').filter(p => p.trim() !== '');
                 resultText.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+                document.getElementById('playAudioBtn').classList.remove('hidden');
             } catch (error) {
                 console.error("Error calling Gemini API:", error);
                 resultText.textContent = "An error occurred. Please try again.";
